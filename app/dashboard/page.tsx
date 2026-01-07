@@ -667,404 +667,362 @@ export default function Dashboard() {
   if (isHeadPastor) {
     // Sample data for head pastor dashboard
     const executiveStats = useMemo(() => {
-      const now = new Date();
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
-      const monthIncome = incomeEntries
-        .filter(entry => entry.date.startsWith(currentMonth))
-        .reduce((sum, entry) => sum + entry.amount, 0);
-      
-      const monthExpenditure = expenditureEntries
-        .filter(entry => entry.date.startsWith(currentMonth))
-        .reduce((sum, entry) => sum + entry.amount, 0);
-      
-      return {
-        members: {
-          total: 450,
-          active: 380,
-          newThisMonth: 12,
-          growth: 2.5,
-        },
-        attendance: {
-          totalThisMonth: 2840,
-          averagePerService: 142,
-          servicesThisMonth: 20,
-          growth: 5.2,
-        },
-        finances: {
-          income: monthIncome,
-          expenditure: monthExpenditure,
-          net: monthIncome - monthExpenditure,
-          tithes: 12500.00,
-        },
-        organizations: {
-          total: 11,
-          classes: 5,
-          activeLeaders: 16,
-        },
-      };
-    }, [incomeEntries, expenditureEntries]);
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const monthIncome = incomeEntries
+      .filter(entry => entry.date.startsWith(currentMonth))
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    
+    const monthExpenditure = expenditureEntries
+      .filter(entry => entry.date.startsWith(currentMonth))
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    
+    return {
+      members: {
+        total: 450,
+        active: 380,
+        newThisMonth: 12,
+        growth: 2.5,
+      },
+      attendance: {
+        totalThisMonth: 2840,
+        averagePerService: 142,
+        servicesThisMonth: 20,
+        growth: 5.2,
+      },
+      finances: {
+        income: monthIncome,
+        expenditure: monthExpenditure,
+        net: monthIncome - monthExpenditure,
+        tithes: 12500.00,
+      },
+      organizations: {
+        total: 11,
+        classes: 5,
+        activeLeaders: 16,
+      },
+    };
+  }, [incomeEntries, expenditureEntries]);
 
-    const executiveStatsCards = [
-      {
-        title: 'Total Members',
-        value: executiveStats.members.total.toLocaleString(),
-        subtitle: `${executiveStats.members.active} active`,
-        change: `+${executiveStats.members.newThisMonth} this month`,
-        trend: 'up' as const,
-        icon: HiOutlineUsers,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
-        href: '/dashboard/members',
-      },
-      {
-        title: 'Monthly Attendance',
-        value: executiveStats.attendance.totalThisMonth.toLocaleString(),
-        subtitle: `${executiveStats.attendance.averagePerService} avg/service`,
-        change: `+${executiveStats.attendance.growth}% growth`,
-        trend: 'up' as const,
-        icon: HiOutlineClipboardCheck,
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
-        href: '/dashboard/attendance',
-      },
-      {
-        title: 'Net Income',
-        value: `GHC ${executiveStats.finances.net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        subtitle: `Income: GHC ${executiveStats.finances.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        change: executiveStats.finances.net >= 0 ? 'Surplus' : 'Deficit',
-        trend: executiveStats.finances.net >= 0 ? 'up' : 'down',
-        icon: executiveStats.finances.net >= 0 ? HiTrendingUp : HiTrendingDown,
-        color: executiveStats.finances.net >= 0 ? 'text-green-600' : 'text-red-600',
-        bgColor: executiveStats.finances.net >= 0 ? 'bg-green-100' : 'bg-red-100',
-        href: '/dashboard/generate-report',
-      },
-      {
-        title: 'Organizations',
-        value: executiveStats.organizations.total.toString(),
-        subtitle: `${executiveStats.organizations.classes} Bible Classes`,
-        change: `${executiveStats.organizations.activeLeaders} active leaders`,
-        trend: 'neutral' as const,
-        icon: HiOutlineOfficeBuilding,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100',
-        href: '/dashboard/departments',
-      },
-    ];
+  const recentActivity = useMemo(() => [
+    {
+      id: 1,
+      type: 'financial',
+      title: 'Income recorded',
+      description: `GHC ${incomeEntries[0]?.amount.toFixed(2)} - ${incomeEntries[0]?.category}`,
+      time: '2 hours ago',
+      icon: HiPlus,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      href: '/dashboard/record-income',
+    },
+    {
+      id: 2,
+      type: 'member',
+      title: 'New member registered',
+      description: 'John Doe joined the church',
+      time: '1 day ago',
+      icon: HiOutlineUsers,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      href: '/dashboard/members',
+    },
+    {
+      id: 3,
+      type: 'attendance',
+      title: 'Sunday Service recorded',
+      description: '102 attendees recorded',
+      time: '1 day ago',
+      icon: HiOutlineClipboardCheck,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      href: '/dashboard/attendance',
+    },
+    {
+      id: 4,
+      type: 'financial',
+      title: 'Tithe recorded',
+      description: 'GHC 150.00 - Member tithe',
+      time: '2 days ago',
+      icon: HiReceiptRefund,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      href: '/dashboard/tithes',
+    },
+    {
+      id: 5,
+      type: 'expenditure',
+      title: 'Expenditure recorded',
+      description: `GHC ${expenditureEntries[0]?.amount.toFixed(2)} - ${expenditureEntries[0]?.category}`,
+      time: '3 days ago',
+      icon: HiMinus,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      href: '/dashboard/expenditure',
+    },
+  ], [incomeEntries, expenditureEntries]);
 
-    const recentActivity = useMemo(() => [
-      {
-        id: 1,
-        type: 'financial',
-        title: 'Income recorded',
-        description: `GHC ${incomeEntries[0]?.amount.toFixed(2)} - ${incomeEntries[0]?.category}`,
-        time: '2 hours ago',
-        icon: HiPlus,
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
-        href: '/dashboard/record-income',
-      },
-      {
-        id: 2,
-        type: 'member',
-        title: 'New member registered',
-        description: 'John Doe joined the church',
-        time: '1 day ago',
-        icon: HiOutlineUsers,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
-        href: '/dashboard/members',
-      },
-      {
-        id: 3,
-        type: 'attendance',
-        title: 'Sunday Service recorded',
-        description: '102 attendees recorded',
-        time: '1 day ago',
-        icon: HiOutlineClipboardCheck,
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
-        href: '/dashboard/attendance',
-      },
-      {
-        id: 4,
-        type: 'financial',
-        title: 'Tithe recorded',
-        description: 'GHC 150.00 - Member tithe',
-        time: '2 days ago',
-        icon: HiReceiptRefund,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100',
-        href: '/dashboard/tithes',
-      },
-      {
-        id: 5,
-        type: 'expenditure',
-        title: 'Expenditure recorded',
-        description: `GHC ${expenditureEntries[0]?.amount.toFixed(2)} - ${expenditureEntries[0]?.category}`,
-        time: '3 days ago',
-        icon: HiMinus,
-        color: 'text-red-600',
-        bgColor: 'bg-red-100',
-        href: '/dashboard/expenditure',
-      },
-    ], [incomeEntries, expenditureEntries]);
+  const executiveStatsCards = [
+    {
+      title: 'Total Members',
+      value: executiveStats.members.total.toLocaleString(),
+      subtitle: `${executiveStats.members.active} active`,
+      change: `+${executiveStats.members.newThisMonth} this month`,
+      trend: 'up' as const,
+      icon: HiOutlineUsers,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      href: '/dashboard/members',
+    },
+    {
+      title: 'Monthly Attendance',
+      value: executiveStats.attendance.totalThisMonth.toLocaleString(),
+      subtitle: `${executiveStats.attendance.averagePerService} avg/service`,
+      change: `+${executiveStats.attendance.growth}% growth`,
+      trend: 'up' as const,
+      icon: HiOutlineClipboardCheck,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      href: '/dashboard/attendance',
+    },
+    {
+      title: 'Net Income',
+      value: `GHC ${executiveStats.finances.net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      subtitle: `Income: GHC ${executiveStats.finances.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      change: executiveStats.finances.net >= 0 ? 'Surplus' : 'Deficit',
+      trend: executiveStats.finances.net >= 0 ? 'up' : 'down',
+      icon: executiveStats.finances.net >= 0 ? HiTrendingUp : HiTrendingDown,
+      color: executiveStats.finances.net >= 0 ? 'text-green-600' : 'text-red-600',
+      bgColor: executiveStats.finances.net >= 0 ? 'bg-green-100' : 'bg-red-100',
+      href: '/dashboard/generate-report',
+    },
+    {
+      title: 'Organizations',
+      value: executiveStats.organizations.total.toString(),
+      subtitle: `${executiveStats.organizations.classes} Bible Classes`,
+      change: `${executiveStats.organizations.activeLeaders} active leaders`,
+      trend: 'neutral' as const,
+      icon: HiOutlineOfficeBuilding,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      href: '/dashboard/departments',
+    },
+  ];
 
-    return (
-      <div className="space-y-6">
-        {/* Welcome Header */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            Welcome, {user?.name || 'Pastor'}!
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Executive overview of church operations and key metrics
-          </p>
-        </div>
+  return (
+    <div className="space-y-6">
+      {/* Welcome Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          Welcome, {user?.name || 'User'}!
+        </h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">
+          Executive overview of church operations and key metrics
+        </p>
+      </div>
 
-        {/* Executive Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {executiveStatsCards.map((stat, index) => {
-            const Icon = stat.icon;
-            const pattern = patternStyles[index % patternStyles.length];
-            return (
-              <Link key={index} href={stat.href}>
-                <Card className="relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                  <div 
-                    className="absolute inset-0"
-                    style={{ backgroundImage: pattern.background }}
-                  />
-                  <CardContent className="p-6 relative z-10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-600 mb-1">{stat.title}</p>
-                        <p className="text-xl font-semibold text-gray-900 mb-1">{stat.value}</p>
-                        <p className="text-xs text-gray-500">{stat.subtitle}</p>
-                      </div>
-                      <div className={`w-12 h-12 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                        <Icon className={`h-6 w-6 ${stat.color}`} />
-                      </div>
+      {/* Executive Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {executiveStatsCards.map((stat, index) => {
+          const Icon = stat.icon;
+          const pattern = patternStyles[index % patternStyles.length];
+          return (
+            <Link key={index} href={stat.href}>
+              <Card className="relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                <div 
+                  className="absolute inset-0"
+                  style={{ backgroundImage: pattern.background }}
+                />
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-600 mb-1">{stat.title}</p>
+                      <p className="text-xl font-semibold text-gray-900 mb-1">{stat.value}</p>
+                      <p className="text-xs text-gray-500">{stat.subtitle}</p>
                     </div>
-                    {stat.change && (
-                      <div className="flex items-center gap-1 pt-2 border-t border-gray-100">
-                        {stat.trend === 'up' && <HiArrowUp className="h-3 w-3 text-green-600" />}
-                        {stat.trend === 'down' && <HiArrowDown className="h-3 w-3 text-red-600" />}
-                        <p className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : stat.trend === 'down' ? 'text-red-600' : 'text-gray-600'}`}>
-                          {stat.change}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Financial Overview */}
-          <Card className="lg:col-span-2 relative overflow-hidden">
-            <div 
-              className="absolute inset-0"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'grid\' width=\'40\' height=\'40\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 40 0 L 0 0 0 40\' fill=\'none\' stroke=\'%2316a34a\' stroke-width=\'1\' opacity=\'0.15\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100\' height=\'100\' fill=\'url(%23grid)\'/%3E%3C/svg%3E")',
-              }}
-            />
-            <div className="absolute top-0 right-0 w-32 h-32 bg-green-500 rounded-full blur-3xl opacity-8" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400 rounded-full blur-2xl opacity-8" />
-            <CardHeader className="pb-4 relative z-10">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900">Financial Overview</CardTitle>
-                <Link href="/dashboard/generate-report">
-                  <Button variant="outline" size="sm">
-                    View Reports
-                    <HiChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="space-y-4 sm:space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                  <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
-                    <p className="text-xs text-gray-600 mb-1">Total Income</p>
-                    <p className="text-lg sm:text-xl font-semibold text-green-700 break-words">
-                      GHC {executiveStats.finances.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <Link href="/dashboard/record-income" className="text-xs text-green-600 hover:text-green-700 mt-2 inline-block">
-                      View Details →
-                    </Link>
+                    <div className={`w-12 h-12 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
+                      <Icon className={`h-6 w-6 ${stat.color}`} />
+                    </div>
                   </div>
-                  <div className="bg-red-50 rounded-lg p-3 sm:p-4 border border-red-200">
-                    <p className="text-xs text-gray-600 mb-1">Total Expenditure</p>
-                    <p className="text-lg sm:text-xl font-semibold text-red-700 break-words">
-                      GHC {executiveStats.finances.expenditure.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <Link href="/dashboard/expenditure" className="text-xs text-red-600 hover:text-red-700 mt-2 inline-block">
-                      View Details →
-                    </Link>
-                  </div>
-                  <div className={`rounded-lg p-3 sm:p-4 border ${executiveStats.finances.net >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                    <p className="text-xs text-gray-600 mb-1">Net Balance</p>
-                    <p className={`text-lg sm:text-xl font-semibold ${executiveStats.finances.net >= 0 ? 'text-green-700' : 'text-red-700'} break-words`}>
-                      GHC {executiveStats.finances.net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <p className={`text-xs mt-2 ${executiveStats.finances.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {executiveStats.finances.net >= 0 ? 'Surplus' : 'Deficit'}
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Total Tithes</p>
-                      <p className="text-xl font-semibold text-purple-700">
-                        GHC {executiveStats.finances.tithes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {stat.change && (
+                    <div className="flex items-center gap-1 pt-2 border-t border-gray-100">
+                      {stat.trend === 'up' && <HiArrowUp className="h-3 w-3 text-green-600" />}
+                      {stat.trend === 'down' && <HiArrowDown className="h-3 w-3 text-red-600" />}
+                      <p className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : stat.trend === 'down' ? 'text-red-600' : 'text-gray-600'}`}>
+                        {stat.change}
                       </p>
                     </div>
-                    <Link href="/dashboard/tithes">
-                      <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-100">
-                        View Tithes
-                      </Button>
-                    </Link>
-                  </div>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Financial Overview */}
+        <Card className="lg:col-span-2 relative overflow-hidden">
+          <div 
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'grid\' width=\'40\' height=\'40\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 40 0 L 0 0 0 40\' fill=\'none\' stroke=\'%2316a34a\' stroke-width=\'1\' opacity=\'0.15\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100\' height=\'100\' fill=\'url(%23grid)\'/%3E%3C/svg%3E")',
+            }}
+          />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500 rounded-full blur-3xl opacity-8" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400 rounded-full blur-2xl opacity-8" />
+          <CardHeader className="pb-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold text-gray-900">Financial Overview</CardTitle>
+              <Link href="/dashboard/generate-report">
+                <Button variant="outline" size="sm">
+                  View Reports
+                  <HiChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
+                  <p className="text-xs text-gray-600 mb-1">Total Income</p>
+                  <p className="text-lg sm:text-xl font-semibold text-green-700 break-words">
+                    GHC {executiveStats.finances.income.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <Link href="/dashboard/record-income" className="text-xs text-green-600 hover:text-green-700 mt-2 inline-block">
+                    View Details →
+                  </Link>
+                </div>
+                <div className="bg-red-50 rounded-lg p-3 sm:p-4 border border-red-200">
+                  <p className="text-xs text-gray-600 mb-1">Total Expenditure</p>
+                  <p className="text-lg sm:text-xl font-semibold text-red-700 break-words">
+                    GHC {executiveStats.finances.expenditure.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <Link href="/dashboard/expenditure" className="text-xs text-red-600 hover:text-red-700 mt-2 inline-block">
+                    View Details →
+                  </Link>
+                </div>
+                <div className={`rounded-lg p-3 sm:p-4 border ${executiveStats.finances.net >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <p className="text-xs text-gray-600 mb-1">Net Balance</p>
+                  <p className={`text-lg sm:text-xl font-semibold ${executiveStats.finances.net >= 0 ? 'text-green-700' : 'text-red-700'} break-words`}>
+                    GHC {executiveStats.finances.net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <p className={`text-xs mt-2 ${executiveStats.finances.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {executiveStats.finances.net >= 0 ? 'Surplus' : 'Deficit'}
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-0 relative overflow-hidden">
-            <div 
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'2\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-              }}
-            />
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -mr-16 -mt-16 opacity-10"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full -ml-12 -mb-12 opacity-10"></div>
-            <CardContent className="p-6 relative z-10">
-              <div className="mb-4">
-                <CardTitle className="text-base font-semibold text-white mb-2">Quick Access</CardTitle>
-                <p className="text-xs text-blue-100">Navigate to key areas</p>
-              </div>
-              <div className="space-y-2">
-                <Link href="/dashboard/members">
-                  <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0 mb-2">
-                    <HiOutlineUsers className="h-4 w-4 mr-2" />
-                    View Members
-                  </Button>
-                </Link>
-                <Link href="/dashboard/attendance">
-                  <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0 mb-2">
-                    <HiOutlineClipboardCheck className="h-4 w-4 mr-2" />
-                    View Attendance
-                  </Button>
-                </Link>
-                <Link href="/dashboard/generate-report">
-                  <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0 mb-2">
-                    <HiOutlineChartBar className="h-4 w-4 mr-2" />
-                    Generate Report
-                  </Button>
-                </Link>
-                <Link href="/dashboard/departments">
-                  <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0">
-                    <HiOutlineOfficeBuilding className="h-4 w-4 mr-2" />
-                    Organizations
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Members & Attendance Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Members Overview */}
-          <Card className="relative overflow-hidden">
-            <div 
-              className="absolute top-0 right-0 w-64 h-64"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 50 Q25 30, 50 50 T100 50\' stroke=\'%233b82f6\' stroke-width=\'1.5\' fill=\'none\' opacity=\'0.12\'/%3E%3C/svg%3E")',
-              }}
-            />
-            <CardHeader className="pb-4 relative z-10">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm sm:text-base font-semibold text-gray-900">Members Overview</CardTitle>
-                <Link href="/dashboard/members">
-                  <HiChevronRight className="h-4 w-4 text-blue-600" />
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-600 mb-1">Total</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-gray-900">{executiveStats.members.total}</p>
+                    <p className="text-xs text-gray-600 mb-1">Total Tithes</p>
+                    <p className="text-xl font-semibold text-purple-700">
+                      GHC {executiveStats.finances.tithes.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Active</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-blue-600">{executiveStats.members.active}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">New This Month</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-green-600">+{executiveStats.members.newThisMonth}</p>
-                  </div>
+                  <Link href="/dashboard/tithes">
+                    <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-100">
+                      View Tithes
+                    </Button>
+                  </Link>
                 </div>
-                <Link href="/dashboard/members">
-                  <Button variant="outline" className="w-full">
-                    View All Members
-                  </Button>
-                </Link>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Attendance Overview */}
-          <Card className="relative overflow-hidden">
-            <div 
-              className="absolute top-0 right-0 w-64 h-64"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 50 Q25 30, 50 50 T100 50\' stroke=\'%2316a34a\' stroke-width=\'1.5\' fill=\'none\' opacity=\'0.12\'/%3E%3C/svg%3E")',
-              }}
-            />
-            <CardHeader className="pb-4 relative z-10">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900">Attendance Overview</CardTitle>
-                <Link href="/dashboard/attendance">
-                  <HiChevronRight className="h-4 w-4 text-green-600" />
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">This Month</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-gray-900">{executiveStats.attendance.totalThisMonth.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Avg/Service</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-green-600">{executiveStats.attendance.averagePerService}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Services</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-blue-600">{executiveStats.attendance.servicesThisMonth}</p>
-                  </div>
+        {/* Quick Actions */}
+        <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-0 relative overflow-hidden">
+          <div 
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'2\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            }}
+          />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -mr-16 -mt-16 opacity-10"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full -ml-12 -mb-12 opacity-10"></div>
+          <CardContent className="p-6 relative z-10">
+            <div className="mb-4">
+              <CardTitle className="text-base font-semibold text-white mb-2">Quick Access</CardTitle>
+              <p className="text-xs text-blue-100">Navigate to key areas</p>
+            </div>
+            <div className="space-y-2">
+              <Link href="/dashboard/members">
+                <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0 mb-2">
+                  <HiOutlineUsers className="h-4 w-4 mr-2" />
+                  View Members
+                </Button>
+              </Link>
+              <Link href="/dashboard/attendance">
+                <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0 mb-2">
+                  <HiOutlineClipboardCheck className="h-4 w-4 mr-2" />
+                  View Attendance
+                </Button>
+              </Link>
+              <Link href="/dashboard/generate-report">
+                <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0 mb-2">
+                  <HiOutlineChartBar className="h-4 w-4 mr-2" />
+                  Generate Report
+                </Button>
+              </Link>
+              <Link href="/dashboard/departments">
+                <Button variant="outline" className="w-full bg-white text-blue-600 hover:bg-blue-50 border-0">
+                  <HiOutlineOfficeBuilding className="h-4 w-4 mr-2" />
+                  Organizations
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Members & Attendance Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Members Overview */}
+        <Card className="relative overflow-hidden">
+          <div 
+            className="absolute top-0 right-0 w-64 h-64"
+            style={{
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 50 Q25 30, 50 50 T100 50\' stroke=\'%233b82f6\' stroke-width=\'1.5\' fill=\'none\' opacity=\'0.12\'/%3E%3C/svg%3E")',
+            }}
+          />
+          <CardHeader className="pb-4 relative z-10">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm sm:text-base font-semibold text-gray-900">Members Overview</CardTitle>
+              <Link href="/dashboard/members">
+                <HiChevronRight className="h-4 w-4 text-blue-600" />
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Total</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-gray-900">{executiveStats.members.total}</p>
                 </div>
-                <Link href="/dashboard/attendance">
-                  <Button variant="outline" className="w-full">
-                    View Attendance Records
-                  </Button>
-                </Link>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Active</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-blue-600">{executiveStats.members.active}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">New This Month</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-green-600">+{executiveStats.members.newThisMonth}</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <Link href="/dashboard/members">
+                <Button variant="outline" className="w-full">
+                  View All Members
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Recent Activity */}
+        {/* Attendance Overview */}
         <Card className="relative overflow-hidden">
           <div 
             className="absolute top-0 right-0 w-64 h-64"
@@ -1074,38 +1032,80 @@ export default function Dashboard() {
           />
           <CardHeader className="pb-4 relative z-10">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold text-gray-900">Recent Activity</CardTitle>
-              <button className="text-xs text-green-600 hover:text-green-700 font-medium flex items-center gap-1">
-                See all
-                <HiOutlineArrowRight className="h-3 w-3" />
-              </button>
+              <CardTitle className="text-base font-semibold text-gray-900">Attendance Overview</CardTitle>
+              <Link href="/dashboard/attendance">
+                <HiChevronRight className="h-4 w-4 text-green-600" />
+              </Link>
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="space-y-4">
-              {recentActivity.map((activity) => {
-                const Icon = activity.icon;
-                return (
-                  <Link key={activity.id} href={activity.href}>
-                    <div className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg px-2 transition-colors cursor-pointer">
-                      <div className={`w-10 h-10 rounded-lg ${activity.bgColor} flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`h-5 w-5 ${activity.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{activity.description}</p>
-                        <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                      </div>
-                      <HiChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    </div>
-                  </Link>
-                );
-              })}
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">This Month</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-gray-900">{executiveStats.attendance.totalThisMonth.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Avg/Service</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-green-600">{executiveStats.attendance.averagePerService}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-1">Services</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-blue-600">{executiveStats.attendance.servicesThisMonth}</p>
+                </div>
+              </div>
+              <Link href="/dashboard/attendance">
+                <Button variant="outline" className="w-full">
+                  View Attendance Records
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-    );
+
+      {/* Recent Activity */}
+      <Card className="relative overflow-hidden">
+        <div 
+          className="absolute top-0 right-0 w-64 h-64"
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 50 Q25 30, 50 50 T100 50\' stroke=\'%2316a34a\' stroke-width=\'1.5\' fill=\'none\' opacity=\'0.12\'/%3E%3C/svg%3E")',
+          }}
+        />
+        <CardHeader className="pb-4 relative z-10">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold text-gray-900">Recent Activity</CardTitle>
+            <button className="text-xs text-green-600 hover:text-green-700 font-medium flex items-center gap-1">
+              See all
+              <HiOutlineArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+        </CardHeader>
+        <CardContent className="relative z-10">
+          <div className="space-y-4">
+            {recentActivity.map((activity) => {
+              const Icon = activity.icon;
+              return (
+                <Link key={activity.id} href={activity.href}>
+                  <div className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg px-2 transition-colors cursor-pointer">
+                    <div className={`w-10 h-10 rounded-lg ${activity.bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`h-5 w-5 ${activity.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{activity.description}</p>
+                      <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                    </div>
+                    <HiChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
   }
 
   // Fallback for other roles

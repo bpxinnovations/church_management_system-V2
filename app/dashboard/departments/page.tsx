@@ -781,31 +781,33 @@ export default function DepartmentsPage() {
         </CardContent>
       </Card>
 
-      {/* Role-Based Access */}
-      <Card className="relative overflow-hidden">
-        <CardHeader className="pb-4 relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <CardTitle className="text-base font-semibold text-gray-900">
-              Role-Based Access Control
-            </CardTitle>
-            <Button variant="outline" size="sm">
-              Manage Roles
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="relative z-10">
-          <Table
-            columns={roleColumns}
-            dataSource={roles}
-            rowKey={(record) => `role-${record.role}`}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} roles`,
-            }}
-          />
-        </CardContent>
-      </Card>
+      {/* Role-Based Access - Hidden for head_pastor and church_admin */}
+      {!hasRole('head_pastor') && !hasRole('church_admin') && (
+        <Card className="relative overflow-hidden">
+          <CardHeader className="pb-4 relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <CardTitle className="text-base font-semibold text-gray-900">
+                Role-Based Access Control
+              </CardTitle>
+              <Button variant="outline" size="sm">
+                Manage Roles
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10">
+            <Table
+              columns={roleColumns}
+              dataSource={roles}
+              rowKey={(record) => `role-${record.role}`}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showTotal: (total) => `Total ${total} roles`,
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* View Organization Drawer */}
       <Drawer
