@@ -323,8 +323,7 @@ export default function Dashboard() {
                         {stat.change && (
                           <div className="flex items-center gap-1">
                             {stat.trend === 'up' && <HiArrowUp className="h-3 w-3 text-green-600" />}
-                            {stat.trend === 'down' && <HiArrowDown className="h-3 w-3 text-red-600" />}
-                            <p className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : stat.trend === 'down' ? 'text-red-600' : 'text-gray-600'}`}>
+                            <p className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : 'text-gray-600'}`}>
                               {stat.change}
                             </p>
                           </div>
