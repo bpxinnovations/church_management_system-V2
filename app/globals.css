@@ -3,24 +3,154 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #015595;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter);
+  
+  /* Primary color scale */
+  --color-primary-50: #e6f0f8;
+  --color-primary-100: #b3d4ed;
+  --color-primary-200: #80b8e2;
+  --color-primary-300: #4d9cd7;
+  --color-primary-400: #1a80cc;
+  --color-primary-500: #015595;
+  --color-primary-600: #014477;
+  --color-primary-700: #013359;
+  --color-primary-800: #01223b;
+  --color-primary-900: #01111d;
+  
+  /* Override blue colors to use primary color */
+  --color-blue-50: #e6f0f8;
+  --color-blue-100: #b3d4ed;
+  --color-blue-200: #80b8e2;
+  --color-blue-300: #4d9cd7;
+  --color-blue-400: #1a80cc;
+  --color-blue-500: #015595;
+  --color-blue-600: #015595;
+  --color-blue-700: #014477;
+  --color-blue-800: #013359;
+  --color-blue-900: #01223b;
+  
+  /* Override green colors to use primary color */
+  --color-green-50: #e6f0f8;
+  --color-green-100: #b3d4ed;
+  --color-green-200: #80b8e2;
+  --color-green-300: #4d9cd7;
+  --color-green-400: #1a80cc;
+  --color-green-500: #015595;
+  --color-green-600: #015595;
+  --color-green-700: #014477;
+  --color-green-800: #013359;
+  --color-green-900: #01223b;
 }
 
 body {
-  background: var(--background);
+  background: #f9fafb;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Override Ant Design green colors to use primary color */
+.ant-tag-green {
+  color: #015595 !important;
+  background: #e6f0f8 !important;
+  border-color: #015595 !important;
+}
+
+.ant-tag-green .anticon {
+  color: #015595 !important;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Print Styles */
+@media print {
+  /* Hide sidebar, navigation, and header */
+  aside,
+  header,
+  nav,
+  button:not(.print-button),
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Full width for print */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Remove page margins */
+  @page {
+    margin: 1cm;
+  }
+  
+  /* Remove shadows and adjust spacing for print */
+  .space-y-6 > * {
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+  
+  /* Print-friendly card styles */
+  .ant-card,
+  [class*="Card"] {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    page-break-inside: avoid;
+  }
+  
+  /* Ensure tables print properly */
+  .ant-table {
+    page-break-inside: avoid;
+  }
+  
+  /* Hide action buttons and non-essential elements */
+  .flex.gap-3 button:not(.print-button),
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Show only report content */
+  body {
+    background: white !important;
+  }
+  
+  /* Adjust text colors for print */
+  .text-gray-600,
+  .text-gray-500 {
+    color: #4b5563 !important;
+  }
 }
