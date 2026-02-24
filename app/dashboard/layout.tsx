@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   HiOutlineHome,
   HiOutlineUsers,
@@ -24,26 +24,27 @@ import {
   HiOutlineCube,
 } from 'react-icons/hi';
 import { cn } from '@/lib/utils';
-import { useAuth, UserRole } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth-context';
+import type { PermissionKey } from '@/lib/rbac-types';
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles: UserRole[];
+  permission: PermissionKey;
 }
 
 const allNavigation: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome, roles: ['finance_officer', 'church_admin', 'head_pastor'] },
-  { name: 'Members', href: '/dashboard/members', icon: HiOutlineUsers, roles: ['church_admin', 'head_pastor'] },
-  { name: 'Attendance', href: '/dashboard/attendance', icon: HiOutlineClipboardCheck, roles: ['church_admin', 'head_pastor'] },
-  { name: 'Record Income', href: '/dashboard/record-income', icon: HiPlus, roles: ['finance_officer', 'head_pastor'] },
-  { name: 'Expenditure', href: '/dashboard/expenditure', icon: HiMinus, roles: ['finance_officer', 'head_pastor'] },
-  { name: 'Generate Report', href: '/dashboard/generate-report', icon: HiClipboardList, roles: ['finance_officer', 'head_pastor'] },
-  { name: 'Tithes', href: '/dashboard/tithes', icon: HiReceiptRefund, roles: ['finance_officer', 'head_pastor'] },
-  { name: 'Communication', href: '/dashboard/communication', icon: HiOutlineChatAlt, roles: ['church_admin', 'head_pastor'] },
-  { name: 'Organizations/Classes', href: '/dashboard/departments', icon: HiOutlineOfficeBuilding, roles: ['church_admin', 'head_pastor'] },
-  { name: 'Assets/Equipment', href: '/dashboard/assets', icon: HiOutlineCube, roles: ['church_admin'] },
+  { name: 'Dashboard', href: '/dashboard', icon: HiOutlineHome, permission: 'dashboard' },
+  { name: 'Members', href: '/dashboard/members', icon: HiOutlineUsers, permission: 'members' },
+  { name: 'Attendance', href: '/dashboard/attendance', icon: HiOutlineClipboardCheck, permission: 'attendance' },
+  { name: 'Record Income', href: '/dashboard/record-income', icon: HiPlus, permission: 'record_income' },
+  { name: 'Expenditure', href: '/dashboard/expenditure', icon: HiMinus, permission: 'expenditure' },
+  { name: 'Generate Report', href: '/dashboard/generate-report', icon: HiClipboardList, permission: 'generate_report' },
+  { name: 'Tithes', href: '/dashboard/tithes', icon: HiReceiptRefund, permission: 'tithes' },
+  { name: 'Communication', href: '/dashboard/communication', icon: HiOutlineChatAlt, permission: 'communication' },
+  { name: 'Organizations/Classes', href: '/dashboard/departments', icon: HiOutlineOfficeBuilding, permission: 'organizations_classes' },
+  { name: 'Assets/Equipment', href: '/dashboard/assets', icon: HiOutlineCube, permission: 'assets_equipment' },
 ];
 
 export default function DashboardLayout({
@@ -53,7 +54,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, hasPermission } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -64,11 +65,13 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, router]);
 
-  // Filter navigation based on user role
-  const navigation = allNavigation.filter((item) => {
-    if (!user) return false;
-    return item.roles.includes(user.role);
-  });
+  // Filter navigation by role-based permissions (RBAC)
+  const navigation = useMemo(() => {
+    return allNavigation.filter((item) => {
+      if (!user) return false;
+      return hasPermission(item.permission);
+    });
+  }, [user, hasPermission]);
 
   if (!isAuthenticated || !user) {
     return (
@@ -181,8 +184,8 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 border-l border-gray-200">
               <div className="hidden md:block text-right">
                 <span className="block text-xs md:text-sm font-medium text-gray-900 truncate max-w-[100px] lg:max-w-none">{user.name}</span>
-                <span className="block text-xs text-gray-500 capitalize">
-                  {user.role.replace('_', ' ')}
+                <span className="block text-xs text-gray-500 truncate max-w-[100px] lg:max-w-none">
+                  {user.roleName}
                 </span>
               </div>
               <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold text-xs md:text-sm">
@@ -228,7 +231,7 @@ export default function DashboardLayout({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                        <p className="text-xs text-gray-500 capitalize">{user.role.replace('_', ' ')}</p>
+                        <p className="text-xs text-gray-500">{user.roleName}</p>
                       </div>
                     </div>
                     <button

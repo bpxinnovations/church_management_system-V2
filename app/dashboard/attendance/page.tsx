@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   HiCheckCircle,
   HiOutlineCalendar,
   HiOutlineUsers,
   HiUserGroup,
+  HiFingerPrint,
+  HiQrcode,
 } from "react-icons/hi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,10 +21,17 @@ import {
   Select,
   Button as AntButton,
   Drawer,
-  Table,
-  Pagination,
 } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Paper,
+} from "@mui/material";
 import {
   ManOutlined,
   WomanOutlined,
@@ -31,6 +40,11 @@ import {
 } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import { useAuth } from "@/lib/auth-context";
+import {
+  getAllCheckIns,
+  generateCheckInUrl,
+  type IndividualCheckIn,
+} from "@/lib/attendance-storage";
 
 
 
@@ -218,11 +232,52 @@ const PATTERN_STYLES = [
   },
 ];
 
+type AttendanceTab = 'head_count' | 'fingerprint' | 'qr';
+
 export default function AttendancePage() {
   const { hasRole } = useAuth();
+  const [activeTab, setActiveTab] = useState<AttendanceTab>('head_count');
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(INITIAL_RECORDS);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [form] = Form.useForm();
+  const [individualCheckIns, setIndividualCheckIns] = useState<IndividualCheckIn[]>([]);
+  const [qrService, setQrService] = useState(SERVICES[0]?.id ?? '1st');
+  const [qrDate, setQrDate] = useState(dayjs());
+  // Filter to view check-ins for a specific service & date (e.g. "This Sunday's 1st Service")
+  const [viewFilterService, setViewFilterService] = useState<string>('all');
+  const [viewFilterDate, setViewFilterDate] = useState<string | null>(null);
+  const [checkInPage, setCheckInPage] = useState(0);
+  const [checkInRowsPerPage, setCheckInRowsPerPage] = useState(10);
+
+  useEffect(() => {
+    setIndividualCheckIns(getAllCheckIns());
+  }, [activeTab, showRecordModal]);
+
+  useEffect(() => {
+    setCheckInPage(0);
+  }, [viewFilterService, viewFilterDate]);
+
+  // Filtered individual check-ins by service & date (fingerprint + QR together)
+  const filteredCheckIns = useMemo(() => {
+    let list = individualCheckIns;
+    if (viewFilterService !== 'all') {
+      const serviceName = SERVICES.find((s) => s.id === viewFilterService)?.name ?? viewFilterService;
+      list = list.filter((c) => c.service === serviceName);
+    }
+    if (viewFilterDate) {
+      list = list.filter((c) => c.date === viewFilterDate);
+    }
+    return list;
+  }, [individualCheckIns, viewFilterService, viewFilterDate]);
+
+  const checkInStats = useMemo(() => {
+    const total = filteredCheckIns.length;
+    const fingerprint = filteredCheckIns.filter((c) => c.method === 'fingerprint').length;
+    const qr = filteredCheckIns.filter((c) => c.method === 'qr').length;
+    const male = filteredCheckIns.filter((c) => c.gender === 'male').length;
+    const female = filteredCheckIns.filter((c) => c.gender === 'female').length;
+    return { total, fingerprint, qr, male, female };
+  }, [filteredCheckIns]);
 
   // Calculate totals safely
   const stats = useMemo(() => {
@@ -285,99 +340,41 @@ export default function AttendancePage() {
     return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [attendanceRecords]);
 
-  // Ensure dataSource is always a valid array
+  // Ensure dataSource is always a valid array (Ant Design Table calls .slice on it)
   const tableData = useMemo<AttendanceRecord[]>(() => {
     if (!sortedRecords || !Array.isArray(sortedRecords)) {
       return [];
     }
-    return sortedRecords;
+    return [...sortedRecords];
   }, [sortedRecords]);
 
-  const attendanceColumns: ColumnsType<AttendanceRecord> = [
-    {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date: string) => (
-        <div className="flex items-center gap-2 text-sm text-gray-900">
-          <HiOutlineCalendar className="h-4 w-4 text-gray-400" />
-          {new Date(date).toLocaleDateString()}
-        </div>
-      ),
-      sorter: (a, b) => {
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        return dateA - dateB;
-      },
-      defaultSortOrder: "descend",
-    },
-    {
-      title: "Service",
-      dataIndex: "service",
-      key: "service",
-      render: (service: string) => (
-        <span className="text-sm font-medium text-gray-900">{service}</span>
-      ),
-    },
-    {
-      title: "Men",
-      dataIndex: "men",
-      key: "men",
-      align: "right",
-      render: (men: number) => (
-        <div className="flex items-center justify-end gap-2">
-          <ManOutlined className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-semibold text-gray-900">{men}</span>
-        </div>
-      ),
-      sorter: (a, b) => a.men - b.men,
-    },
-    {
-      title: "Women",
-      dataIndex: "women",
-      key: "women",
-      align: "right",
-      render: (women: number) => (
-        <div className="flex items-center justify-end gap-2">
-          <WomanOutlined className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-semibold text-gray-900">{women}</span>
-        </div>
-      ),
-      sorter: (a, b) => a.women - b.women,
-    },
-    {
-      title: "Children",
-      dataIndex: "children",
-      key: "children",
-      align: "right",
-      render: (children: number) => (
-        <div className="flex items-center justify-end gap-2">
-          <UserOutlined className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-semibold text-gray-900">{children}</span>
-        </div>
-      ),
-      sorter: (a, b) => a.children - b.children,
-    },
-    {
-      title: "Total",
-      dataIndex: "total",
-      key: "total",
-      align: "right",
-      render: (total: number) => (
-        <span className="text-sm font-bold text-green-600">{total}</span>
-      ),
-      sorter: (a, b) => a.total - b.total,
-    },
-    {
-      title: "Notes",
-      dataIndex: "notes",
-      key: "notes",
-      render: (notes?: string) => (
-        <span className="text-sm text-gray-500">{notes || "-"}</span>
-      ),
-    },
+  // Safe dataSource for Ant Design: always a real array (Table calls .slice() on it)
+  const headCountDataSource = useMemo(() => {
+    const data = Array.isArray(tableData) ? tableData : [];
+    return Array.isArray(data) ? [...data] : [];
+  }, [tableData]);
+
+  // Safe dataSource for check-ins table
+  const checkInDataSource = useMemo(() => {
+    const data = Array.isArray(filteredCheckIns) ? filteredCheckIns : [];
+    return Array.isArray(data) ? [...data] : [];
+  }, [filteredCheckIns]);
+
+  const attendanceHeadCells = [
+    { id: "date", label: "Date" },
+    { id: "service", label: "Service" },
+    { id: "men", label: "Men", align: "right" as const },
+    { id: "women", label: "Women", align: "right" as const },
+    { id: "children", label: "Children", align: "right" as const },
+    { id: "total", label: "Total", align: "right" as const },
+    { id: "notes", label: "Notes" },
   ];
 
+  const qrUrl = useMemo(
+    () => generateCheckInUrl(SERVICES.find((s) => s.id === qrService)?.name ?? qrService, qrDate.format('YYYY-MM-DD')),
+    [qrService, qrDate]
+  );
+  const qrImageUrl = typeof window !== 'undefined' ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrUrl)}` : '';
 
   return (
       <div className="space-y-4 sm:space-y-6">
@@ -387,103 +384,410 @@ export default function AttendancePage() {
             <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               Attendance Management
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Track and record attendance by category</p>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Head count, fingerprint check-in, or QR scan
+            </p>
           </div>
-          {!hasRole('head_pastor') && (
-            <Button
-              onClick={() => {
-                form.resetFields();
-                setShowRecordModal(true);
-              }}
-              className="shadow-lg w-full sm:w-auto"
-            >
-              <PlusOutlined className="mr-2" />
-              Record Attendance
-            </Button>
-          )}
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[0].background }} />
-            <CardContent className="p-4 sm:p-6 relative z-10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Total Men</p>
-                  <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.men.toLocaleString()}</p>
-                </div>
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <ManOutlined className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[1].background }} />
-            <CardContent className="p-4 sm:p-6 relative z-10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Total Women</p>
-                  <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.women.toLocaleString()}</p>
-                </div>
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <WomanOutlined className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[2].background }} />
-            <CardContent className="p-4 sm:p-6 relative z-10">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Total Children</p>
-                  <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.children.toLocaleString()}</p>
-                </div>
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <UserOutlined className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Tabs */}
+        <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+          <button
+            onClick={() => setActiveTab('head_count')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+              activeTab === 'head_count' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <HiOutlineUsers className="h-5 w-5" />
+            Head count
+          </button>
+          <button
+            onClick={() => setActiveTab('fingerprint')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+              activeTab === 'fingerprint' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <HiFingerPrint className="h-5 w-5" />
+            Fingerprint check-in
+          </button>
+          <button
+            onClick={() => setActiveTab('qr')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+              activeTab === 'qr' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <HiQrcode className="h-5 w-5" />
+            QR check-in
+          </button>
         </div>
 
-        {/* Total Attendance */}
-        <Card className="relative overflow-hidden">
-          <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[0].background }} />
-          <CardContent className="p-4 sm:p-6 relative z-10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Total Attendance</p>
-                <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.total.toLocaleString()}</p>
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                <HiUserGroup className="h-5 w-5 text-green-600" />
-              </div>
+        {/* Tab: Head count */}
+        {activeTab === 'head_count' && (
+          <>
+            <div className="flex justify-end">
+              {!hasRole('head_pastor') && (
+                <Button
+                  onClick={() => {
+                    form.resetFields();
+                    setShowRecordModal(true);
+                  }}
+                  className="shadow-lg"
+                >
+                  <PlusOutlined className="mr-2" />
+                  Record head count
+                </Button>
+              )}
             </div>
-          </CardContent>
-        </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <Card className="relative overflow-hidden">
+                <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[0].background }} />
+                <CardContent className="p-4 sm:p-6 relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Total Men</p>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.men.toLocaleString()}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <ManOutlined className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="relative overflow-hidden">
+                <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[1].background }} />
+                <CardContent className="p-4 sm:p-6 relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Total Women</p>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.women.toLocaleString()}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <WomanOutlined className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="relative overflow-hidden">
+                <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[2].background }} />
+                <CardContent className="p-4 sm:p-6 relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Total Children</p>
+                      <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.children.toLocaleString()}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <UserOutlined className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <Card className="relative overflow-hidden">
+              <div className="absolute inset-0" style={{ backgroundImage: PATTERN_STYLES[0].background }} />
+              <CardContent className="p-4 sm:p-6 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Total Attendance</p>
+                    <p className="text-lg sm:text-xl font-semibold text-gray-900">{stats.total.toLocaleString()}</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <HiUserGroup className="h-5 w-5 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="relative overflow-hidden">
+              <CardHeader className="pb-4 relative z-10">
+                <CardTitle className="text-base font-semibold text-gray-900">Head count history</CardTitle>
+              </CardHeader>
+              <CardContent className="relative z-10 overflow-x-auto">
+                <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+                  <Table size="small" stickyHeader aria-label="Head count history">
+                    <TableHead>
+                      <TableRow>
+                        {attendanceHeadCells.map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            align={cell.align ?? "left"}
+                            sx={{ fontWeight: 600, backgroundColor: "grey.100" }}
+                          >
+                            {cell.label}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(Array.isArray(headCountDataSource) ? headCountDataSource : []).map((record) => (
+                        <TableRow key={`attendance-${record.id}`} hover>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-sm text-gray-900">
+                              <HiOutlineCalendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                              {new Date(record.date).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm font-medium text-gray-900">{record.service}</span>
+                          </TableCell>
+                          <TableCell align="right">
+                            <div className="flex items-center justify-end gap-2">
+                              <ManOutlined className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-semibold text-gray-900">{record.men}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell align="right">
+                            <div className="flex items-center justify-end gap-2">
+                              <WomanOutlined className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-semibold text-gray-900">{record.women}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell align="right">
+                            <div className="flex items-center justify-end gap-2">
+                              <UserOutlined className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-semibold text-gray-900">{record.children}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell align="right">
+                            <span className="text-sm font-bold text-green-600">{record.total}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-gray-500">{record.notes || "—"}</span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
-        {/* Attendance History Table */}
-        <Card className="relative overflow-hidden">
-          <CardHeader className="pb-4 relative z-10">
-            <CardTitle className="text-base font-semibold text-gray-900">
-              Attendance History
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative z-10 overflow-x-auto">
-            <Table
-              columns={attendanceColumns}
-              dataSource={[]}
-              rowKey={(record) => `attendance-${record.id}`}
-              pagination={false}
-              scroll={{ x: 'max-content' }}
-            />
-          </CardContent>
-        </Card>
+        {/* Tab: Fingerprint check-in */}
+        {activeTab === 'fingerprint' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HiFingerPrint className="h-5 w-5 text-green-600" />
+                Fingerprint check-in
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Check-in is recorded at the fingerprint device. Fingerprint check-ins appear in the table below (Individual check-ins).
+              </p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500 text-sm">
+                Use the filters in the Individual check-ins section to view fingerprint check-ins by service and date.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tab: QR check-in */}
+        {activeTab === 'qr' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HiQrcode className="h-5 w-5 text-green-600" />
+                QR code check-in
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Generate a QR code for a service. When members scan it, they enter their name and submit; time is recorded at submission.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                  <Select
+                    size="large"
+                    style={{ width: '100%' }}
+                    value={qrService}
+                    onChange={setQrService}
+                    options={SERVICES.map((s) => ({ label: s.name, value: s.id }))}
+                  />
+                </Col>
+                <Col xs={24} sm={12}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <DatePicker
+                    size="large"
+                    style={{ width: '100%' }}
+                    value={qrDate}
+                    onChange={(d) => d && setQrDate(d)}
+                    format="YYYY-MM-DD"
+                  />
+                </Col>
+              </Row>
+              <div className="flex flex-wrap items-start gap-6">
+                <div className="bg-gray-50 rounded-xl p-4 inline-block">
+                  {qrImageUrl ? (
+                    <img src={qrImageUrl} alt="QR code for check-in" className="w-[220px] h-[220px] rounded-lg" />
+                  ) : (
+                    <div className="w-[220px] h-[220px] rounded-lg bg-gray-200 flex items-center justify-center text-gray-500">QR</div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-700 mb-1">Check-in link (share or display)</p>
+                  <p className="text-sm text-gray-600 break-all font-mono bg-gray-100 p-2 rounded">{qrUrl || '—'}</p>
+                  <p className="text-xs text-gray-500 mt-2">Members scan the QR or open this link, enter name (and optional church number), then submit. Time is recorded when they submit.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Individual check-ins: fingerprint + QR together (shown for fingerprint and QR tabs) */}
+        {(activeTab === 'fingerprint' || activeTab === 'qr') && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-gray-900">Individual check-ins (Fingerprint &amp; QR)</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Fingerprint and QR both record who attended. Members can use the fingerprint device at church or scan the QR and enter their details — all show here. Use the filter below to see a specific service and date (e.g. this Sunday&apos;s 1st Service).
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Filter by service & date */}
+              <div className="flex flex-wrap items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-sm font-medium text-gray-700">View for:</span>
+                <Select
+                  size="middle"
+                  style={{ width: 180 }}
+                  value={viewFilterService}
+                  onChange={setViewFilterService}
+                  options={[
+                    { label: 'All services', value: 'all' },
+                    ...SERVICES.map((s) => ({ label: s.name, value: s.id })),
+                  ]}
+                />
+                <DatePicker
+                  size="middle"
+                  placeholder="All dates"
+                  format="YYYY-MM-DD"
+                  value={viewFilterDate ? dayjs(viewFilterDate) : null}
+                  onChange={(d) => setViewFilterDate(d ? d.format('YYYY-MM-DD') : null)}
+                  allowClear
+                  style={{ width: 160 }}
+                />
+                {(viewFilterService !== 'all' || viewFilterDate) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewFilterService('all');
+                      setViewFilterDate(null);
+                    }}
+                    className="text-sm text-green-600 hover:text-green-700 font-medium"
+                  >
+                    Clear filter
+                  </button>
+                )}
+              </div>
+
+              {/* Summary for this service/date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                  <p className="text-xs text-gray-600 uppercase tracking-wide">Total check-ins</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{checkInStats.total}</p>
+                  <p className="text-xs text-gray-500 mt-1">Fingerprint + QR</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 p-4 bg-blue-50/50 border-blue-200">
+                  <p className="text-xs text-gray-700 uppercase tracking-wide flex items-center gap-1">
+                    <ManOutlined /> Male
+                  </p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{checkInStats.male}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 p-4 bg-pink-50/50 border-pink-200">
+                  <p className="text-xs text-gray-700 uppercase tracking-wide flex items-center gap-1">
+                    <WomanOutlined /> Female
+                  </p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">{checkInStats.female}</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
+                  <p className="text-xs text-blue-700 uppercase tracking-wide">Fingerprint</p>
+                  <p className="text-xl font-bold text-blue-900 mt-1">{checkInStats.fingerprint}</p>
+                  <p className="text-xs text-blue-600 mt-1">At device</p>
+                </div>
+                <div className="bg-green-50 rounded-lg border border-green-200 p-4">
+                  <p className="text-xs text-green-700 uppercase tracking-wide">QR scan</p>
+                  <p className="text-xl font-bold text-green-900 mt-1">{checkInStats.qr}</p>
+                  <p className="text-xs text-green-600 mt-1">Scanned &amp; submitted</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                {filteredCheckIns.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">
+                    {individualCheckIns.length === 0
+                      ? 'No check-ins yet. Record via Fingerprint or have members scan the QR.'
+                      : 'No check-ins match the selected service/date.'}
+                  </p>
+                ) : (
+                  <Paper sx={{ width: "100%", overflow: "hidden" }}>
+                    <TableContainer sx={{ maxHeight: 440 }}>
+                      <Table size="small" stickyHeader aria-label="Individual check-ins">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 600, backgroundColor: "grey.100" }}>Name</TableCell>
+                            <TableCell sx={{ fontWeight: 600, backgroundColor: "grey.100" }}>Gender</TableCell>
+                            <TableCell sx={{ fontWeight: 600, backgroundColor: "grey.100" }}>Church no.</TableCell>
+                            <TableCell sx={{ fontWeight: 600, backgroundColor: "grey.100" }}>Service</TableCell>
+                            <TableCell sx={{ fontWeight: 600, backgroundColor: "grey.100" }}>Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600, backgroundColor: "grey.100" }}>Check-in time</TableCell>
+                            <TableCell sx={{ fontWeight: 600, backgroundColor: "grey.100" }}>Method</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {(Array.isArray(checkInDataSource) ? checkInDataSource : [])
+                            .slice(checkInPage * checkInRowsPerPage, checkInPage * checkInRowsPerPage + checkInRowsPerPage)
+                            .map((r) => (
+                              <TableRow key={r.id} hover>
+                                <TableCell>
+                                  <span className="font-medium text-gray-900">{r.memberName}</span>
+                                </TableCell>
+                                <TableCell>
+                                  {r.gender ? (
+                                    <span className={`inline-flex items-center gap-1 ${r.gender === "male" ? "text-blue-700" : "text-pink-700"}`}>
+                                      {r.gender === "male" ? <ManOutlined className="h-4 w-4" /> : <WomanOutlined className="h-4 w-4" />}
+                                      {r.gender === "male" ? "Male" : "Female"}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>{r.churchNumber || "—"}</TableCell>
+                                <TableCell>{r.service}</TableCell>
+                                <TableCell>{new Date(r.date).toLocaleDateString()}</TableCell>
+                                <TableCell>{new Date(r.checkInTime).toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <span
+                                    className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                                      r.method === "fingerprint" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
+                                    }`}
+                                  >
+                                    {r.method === "fingerprint" ? "Fingerprint" : "QR"}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <TablePagination
+                      component="div"
+                      count={checkInDataSource.length}
+                      page={checkInPage}
+                      onPageChange={(_, newPage) => setCheckInPage(newPage)}
+                      rowsPerPage={checkInRowsPerPage}
+                      onRowsPerPageChange={(e) => {
+                        setCheckInRowsPerPage(parseInt(e.target.value, 10));
+                        setCheckInPage(0);
+                      }}
+                      rowsPerPageOptions={[5, 10, 25]}
+                    />
+                  </Paper>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Record Attendance Drawer */}
         <Drawer

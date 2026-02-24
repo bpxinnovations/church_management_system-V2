@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, UserRole } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth-context';
 import {
   HiOutlineLockClosed,
   HiOutlineMail,
@@ -26,17 +26,7 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      // Try all roles to find the correct one based on email/password
-      const roles: UserRole[] = ['finance_officer', 'church_admin', 'head_pastor'];
-      let success = false;
-      
-      for (const roleToTry of roles) {
-        success = await login(email, password, roleToTry);
-        if (success) {
-          break;
-        }
-      }
-      
+      const success = await login(email, password);
       if (success) {
         showToast('Sign in successful!', 'success');
         router.push('/dashboard');

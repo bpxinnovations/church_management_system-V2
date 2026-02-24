@@ -47,8 +47,8 @@ interface ExpenditureEntry {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'church_admin';
-  const isFinanceOfficer = user?.role === 'finance_officer';
+  const isAdmin = user?.roleId === 'church_admin';
+  const isFinanceOfficer = user?.roleId === 'finance_officer';
 
   // Financial data for finance officers
   const [incomeEntries] = useState<IncomeEntry[]>([
@@ -662,7 +662,7 @@ export default function Dashboard() {
   }
 
   // Executive Dashboard for Head Pastor
-  const isHeadPastor = user?.role === 'head_pastor';
+  const isHeadPastor = user?.roleId === 'head_pastor';
   
   if (isHeadPastor) {
     // Sample data for head pastor dashboard
@@ -1121,7 +1121,7 @@ export default function Dashboard() {
       </div>
       <Card>
         <CardContent className="p-6">
-          <p className="text-gray-600">Dashboard content for {user?.role}</p>
+          <p className="text-gray-600">Dashboard content for {user?.roleName}</p>
         </CardContent>
       </Card>
     </div>

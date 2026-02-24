@@ -424,7 +424,7 @@ export default function GenerateReportPage() {
           <Table
             columns={incomeColumns}
             dataSource={incomeReport.items}
-            rowKey={(record, index) => `${record.category}-${record.subcategory}-${index}`}
+            rowKey={(record) => `${record.category}-${record.subcategory ?? ''}-${record.total}-${record.count}`}
             pagination={false}
             summary={() => (
               <Table.Summary fixed>
@@ -460,7 +460,7 @@ export default function GenerateReportPage() {
           <Table
             columns={expenditureColumns}
             dataSource={expenditureReport.items}
-            rowKey={(record, index) => `${record.category}-${record.subcategory}-${index}`}
+            rowKey={(record) => `${record.category}-${record.subcategory ?? ''}-${record.total}-${record.count}`}
             pagination={false}
             summary={() => (
               <Table.Summary fixed>
