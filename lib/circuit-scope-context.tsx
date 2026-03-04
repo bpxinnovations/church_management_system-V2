@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { getCircuits, getCircuitById } from '@/lib/diocese-circuit-storage';
+import { getCircuits, getCircuitById, type Circuit } from '@/lib/diocese-circuit-storage';
 import { SYSTEM_ROLE_IDS } from '@/lib/rbac-types';
 
 /** For circuit module: effective circuit id (assigned for circuit_admin, first circuit for head_pastor) */
@@ -24,7 +24,7 @@ export function CircuitScopeProvider({ children }: { children: React.ReactNode }
   );
 }
 
-export function useCircuitScope(): { circuitId: string | null; circuit: ReturnType<typeof getCircuitById> } {
+export function useCircuitScope(): { circuitId: string | null; circuit: Circuit | null } {
   const circuitId = useContext(CircuitScopeContext);
   const circuit = circuitId ? getCircuitById(circuitId) : null;
   return { circuitId: circuitId ?? null, circuit: circuit ?? null };

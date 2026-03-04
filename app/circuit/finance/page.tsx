@@ -28,6 +28,7 @@ export default function CircuitFinancePage() {
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!circuitId) return;
     const period = form.period || new Date().toISOString().slice(0, 7);
     const balance = form.totalIncome - form.totalExpenditure;
     const newEntry: CircuitFinancialSummary = {
