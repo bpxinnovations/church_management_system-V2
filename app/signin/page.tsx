@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, getDashboardPathForRole } from '@/lib/auth-context';
+import { getStoredUsers } from '@/lib/rbac-storage';
 import {
   HiOutlineLockClosed,
   HiOutlineMail,
@@ -29,7 +30,9 @@ export default function SignInPage() {
       const success = await login(email, password);
       if (success) {
         showToast('Sign in successful!', 'success');
-        router.push('/dashboard');
+        const stored = getStoredUsers().find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+        const path = stored ? getDashboardPathForRole(stored.roleId) : '/dashboard';
+        router.push(path);
       } else {
         showToast('Invalid email or password. Please try again.', 'error');
       }
@@ -121,6 +124,11 @@ export default function SignInPage() {
           </CardContent>
         </Card>
 
+        {/* Demo logins - uncomment to show on login page
+        <p className="text-center text-xs text-gray-400 mt-4">
+          Demo: pastor@church.com · admin@church.com · finance@church.com · diocese@church.com · circuit@church.com (password: pastor123 / admin123 / finance123 / diocese123 / circuit123)
+        </p>
+        */}
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-6">
           © 2025 Church Management System. All rights reserved.

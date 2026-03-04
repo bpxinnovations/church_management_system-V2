@@ -13,7 +13,7 @@ import type { PermissionKey } from './rbac-types';
 import { SYSTEM_ROLE_IDS } from './rbac-types';
 
 /** Legacy role names for backward compatibility (hasRole checks) */
-export type UserRole = 'finance_officer' | 'church_admin' | 'head_pastor';
+export type UserRole = 'finance_officer' | 'church_admin' | 'head_pastor' | 'diocese_admin' | 'circuit_admin';
 
 export interface User {
   id: string;
@@ -22,6 +22,15 @@ export interface User {
   roleId: string;
   roleName: string;
   initials: string;
+  /** For circuit_admin: which circuit this user is scoped to */
+  scopeCircuitId?: string;
+}
+
+/** Redirect path after login based on role */
+export function getDashboardPathForRole(roleId: string): string {
+  if (roleId === SYSTEM_ROLE_IDS.DIOCESE_ADMIN) return '/diocese';
+  if (roleId === SYSTEM_ROLE_IDS.CIRCUIT_ADMIN) return '/circuit';
+  return '/dashboard';
 }
 
 interface AuthContextType {
@@ -32,11 +41,12 @@ interface AuthContextType {
   hasRole: (role: UserRole | UserRole[]) => boolean;
   hasPermission: (permission: PermissionKey) => boolean;
   refreshUser: () => void; // Re-load user from storage (e.g. after role/user updates)
+  dashboardPath: string; // Where to redirect after login (by role)
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function toUser(stored: { id: string; name: string; email: string; roleId: string }): User {
+function toUser(stored: { id: string; name: string; email: string; roleId: string; scopeCircuitId?: string }): User {
   const role = getRoleById(stored.roleId);
   const roleName = role?.name ?? stored.roleId;
   const initials =
@@ -54,6 +64,7 @@ function toUser(stored: { id: string; name: string; email: string; roleId: strin
     roleId: stored.roleId,
     roleName,
     initials,
+    scopeCircuitId: stored.scopeCircuitId,
   };
 }
 
@@ -66,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const raw = localStorage.getItem('church_admin_user');
     if (!raw) return;
     try {
-      const parsed = JSON.parse(raw) as User & { role?: string };
+      const parsed = JSON.parse(raw) as User & { role?: string; scopeCircuitId?: string };
       // Migrate legacy stored user (had "role" string) to roleId/roleName
       const roleId = parsed.roleId ?? parsed.role ?? '';
       const role = getRoleById(roleId);
@@ -78,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roleId,
         roleName,
         initials: parsed.initials ?? '',
+        scopeCircuitId: parsed.scopeCircuitId,
       };
       setUser(userObj);
       localStorage.setItem('church_admin_user', JSON.stringify(userObj));
@@ -145,6 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const dashboardPath = user ? getDashboardPathForRole(user.roleId) : '/dashboard';
+
   return (
     <AuthContext.Provider
       value={{
@@ -155,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasRole,
         hasPermission,
         refreshUser,
+        dashboardPath,
       }}
     >
       {children}

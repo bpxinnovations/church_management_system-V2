@@ -46,6 +46,32 @@ function getDefaultRoles(): Role[] {
       ],
       isSystem: true,
     },
+    {
+      id: SYSTEM_ROLE_IDS.DIOCESE_ADMIN,
+      name: 'Diocese Admin',
+      permissions: [
+        PERMISSIONS.DIOCESE_CIRCUITS,
+        PERMISSIONS.DIOCESE_SUPERINTENDENTS,
+        PERMISSIONS.DIOCESE_STATISTICS,
+        PERMISSIONS.DIOCESE_FINANCIAL_REPORTS,
+        PERMISSIONS.DIOCESE_PERFORMANCE,
+      ],
+      isSystem: true,
+    },
+    {
+      id: SYSTEM_ROLE_IDS.CIRCUIT_ADMIN,
+      name: 'Circuit Admin',
+      permissions: [
+        PERMISSIONS.CIRCUIT_SOCIETIES,
+        PERMISSIONS.CIRCUIT_MINISTERS,
+        PERMISSIONS.CIRCUIT_MEMBERSHIP,
+        PERMISSIONS.CIRCUIT_LEVIES,
+        PERMISSIONS.CIRCUIT_FINANCE,
+        PERMISSIONS.CIRCUIT_REPORTS,
+        PERMISSIONS.CIRCUIT_BUDGET_APPROVALS,
+      ],
+      isSystem: true,
+    },
   ];
 }
 
@@ -71,6 +97,21 @@ export function getDefaultStoredUsers(): StoredUser[] {
       email: 'pastor@church.com',
       password: 'pastor123',
       roleId: SYSTEM_ROLE_IDS.HEAD_PASTOR,
+    },
+    {
+      id: '4',
+      name: 'Diocese Admin',
+      email: 'diocese@church.com',
+      password: 'diocese123',
+      roleId: SYSTEM_ROLE_IDS.DIOCESE_ADMIN,
+    },
+    {
+      id: '5',
+      name: 'Circuit Admin',
+      email: 'circuit@church.com',
+      password: 'circuit123',
+      roleId: SYSTEM_ROLE_IDS.CIRCUIT_ADMIN,
+      scopeCircuitId: 'circuit-1',
     },
   ];
 }

@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import type { PermissionKey } from '@/lib/rbac-types';
+import { SYSTEM_ROLE_IDS } from '@/lib/rbac-types';
 
 interface NavItem {
   name: string;
@@ -58,12 +59,21 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Redirect to signin if not authenticated
+  // Redirect to signin if not authenticated; redirect Diocese/Circuit users to their module
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/signin');
+      return;
     }
-  }, [isAuthenticated, router]);
+    if (user?.roleId === SYSTEM_ROLE_IDS.DIOCESE_ADMIN) {
+      router.push('/diocese');
+      return;
+    }
+    if (user?.roleId === SYSTEM_ROLE_IDS.CIRCUIT_ADMIN) {
+      router.push('/circuit');
+      return;
+    }
+  }, [isAuthenticated, user?.roleId, router]);
 
   // Filter navigation by role-based permissions (RBAC)
   const navigation = useMemo(() => {

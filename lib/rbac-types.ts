@@ -1,6 +1,7 @@
 /**
  * RBAC: Permission keys that gate menu access and special actions.
  * Only Head Pastor can manage roles; users with manage_users can access Add Users.
+ * Diocese and Circuit modules use their own permission sets.
  */
 export const PERMISSIONS = {
   DASHBOARD: 'dashboard',
@@ -16,6 +17,20 @@ export const PERMISSIONS = {
   MANAGE_ROLES: 'manage_roles',   // Role creation/management - Head Pastor only
   MANAGE_USERS: 'manage_users',  // Add Users menu
   SETTINGS: 'settings',
+  // Diocese module
+  DIOCESE_CIRCUITS: 'diocese_circuits',
+  DIOCESE_SUPERINTENDENTS: 'diocese_superintendents',
+  DIOCESE_STATISTICS: 'diocese_statistics',
+  DIOCESE_FINANCIAL_REPORTS: 'diocese_financial_reports',
+  DIOCESE_PERFORMANCE: 'diocese_performance',
+  // Circuit module
+  CIRCUIT_SOCIETIES: 'circuit_societies',
+  CIRCUIT_MINISTERS: 'circuit_ministers',
+  CIRCUIT_MEMBERSHIP: 'circuit_membership',
+  CIRCUIT_LEVIES: 'circuit_levies',
+  CIRCUIT_FINANCE: 'circuit_finance',
+  CIRCUIT_REPORTS: 'circuit_reports',
+  CIRCUIT_BUDGET_APPROVALS: 'circuit_budget_approvals',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -37,6 +52,18 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   [PERMISSIONS.MANAGE_ROLES]: 'Manage Roles (create/edit roles)',
   [PERMISSIONS.MANAGE_USERS]: 'Add Users (create/edit users)',
   [PERMISSIONS.SETTINGS]: 'Settings',
+  [PERMISSIONS.DIOCESE_CIRCUITS]: 'Manage Circuits',
+  [PERMISSIONS.DIOCESE_SUPERINTENDENTS]: 'Assign Superintendents',
+  [PERMISSIONS.DIOCESE_STATISTICS]: 'Circuit Statistics',
+  [PERMISSIONS.DIOCESE_FINANCIAL_REPORTS]: 'Financial Reports (Diocese)',
+  [PERMISSIONS.DIOCESE_PERFORMANCE]: 'Circuit Performance',
+  [PERMISSIONS.CIRCUIT_SOCIETIES]: 'Manage Societies',
+  [PERMISSIONS.CIRCUIT_MINISTERS]: 'Assign Ministers',
+  [PERMISSIONS.CIRCUIT_MEMBERSHIP]: 'Society Membership',
+  [PERMISSIONS.CIRCUIT_LEVIES]: 'Society Levies',
+  [PERMISSIONS.CIRCUIT_FINANCE]: 'Circuit Finance',
+  [PERMISSIONS.CIRCUIT_REPORTS]: 'Society Reports',
+  [PERMISSIONS.CIRCUIT_BUDGET_APPROVALS]: 'Budget Approvals',
 };
 
 /** Role stored in localStorage; Head Pastor is super admin with all permissions */
@@ -54,10 +81,14 @@ export interface StoredUser {
   email: string;
   password: string;
   roleId: string;
+  /** For circuit_admin: which circuit this user is scoped to */
+  scopeCircuitId?: string;
 }
 
 export const SYSTEM_ROLE_IDS = {
   HEAD_PASTOR: 'head_pastor',
   CHURCH_ADMIN: 'church_admin',
   FINANCE_OFFICER: 'finance_officer',
+  DIOCESE_ADMIN: 'diocese_admin',
+  CIRCUIT_ADMIN: 'circuit_admin',
 } as const;

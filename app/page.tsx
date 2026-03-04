@@ -6,15 +6,15 @@ import { useAuth } from '@/lib/auth-context';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, dashboardPath } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      router.push(dashboardPath);
     } else {
       router.push('/signin');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, dashboardPath, router]);
 
   return null;
 }
